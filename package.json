@@ -24,7 +24,7 @@
   "license": "MIT",
   "description": "A boilerplate for FastMCP",
   "dependencies": {
-    "fastmcp": "^1.27.3",
+    "fastmcp": "^3.14.4",
     "zod": "^3.24.4"
   },
   "release": {

@@ -4,9 +4,11 @@ import { z } from "zod";
 import { getTokenByAddress, initializeTokenList, searchTokens } from "./tokenList.js";
 
 const server = new FastMCP({
+  instructions: "This server provides tools to search for tokens by name, symbol, or address, and to retrieve token details.",
   name: "TokenSearch",
-  version: "1.0.0",
-});
+  version: "1.0.0"
+},
+);
 
 initializeTokenList().catch((error: Error) => {
   console.error('Failed to initialize token list:', error);
@@ -39,14 +41,19 @@ server.addTool({
   })
 });
 
-// Add tool to search for tokens
 server.addTool({
   description: "Search for tokens by name or symbol",
   execute: async (args) => {
     const searchType = args.searchType || "full-match";
     const limit = args.limit || 100;
+    const chainId = args.chainId || 1;
     
     let matchedTokens = searchTokens(args.query);
+    
+    if (chainId) {
+      matchedTokens = matchedTokens.filter(token => token.chainId === chainId);
+    }
+    
     if (searchType === "full-match") {
       const normalizedQuery = args.query.toLowerCase();
       matchedTokens = matchedTokens.filter(token => 
@@ -75,6 +82,7 @@ server.addTool({
   },
   name: "search-tokens",
   parameters: z.object({
+    chainId: z.number().optional().describe("The chain ID to filter tokens by (optional)"),
     limit: z.number().optional().describe("Maximum number of tokens to return"),
     query: z.string().describe("Search query for token name or symbol"),
     searchType: z.enum(["full-match", "partial-match"]).optional().describe("Type of match: full-match (exact) or partial-match (contains)")
