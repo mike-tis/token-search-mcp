@@ -1,4 +1,4 @@
-# FastMCP Boilerplate
+# Token Search MCP
 
 A boilerplate for [FastMCP](https://github.com/punkpeye/fastmcp).
 

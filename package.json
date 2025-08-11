@@ -1,5 +1,5 @@
 {
-  "name": "fastmcp-boilerplate",
+  "name": "token-search-mcp",
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
@@ -11,18 +11,19 @@
     "format": "prettier --write . && eslint --fix ."
   },
   "keywords": [
-    "fastmcp",
+    "token",
+    "search",
     "mcp",
-    "boilerplate"
+    "erc20"
   ],
   "repository": {
-    "url": "https://github.com/punkpeye/fastmcp-boilerplate"
+    "url": "https://github.com/mike-tis/token-search-mcp"
   },
-  "author": "Frank Fiegel <frank@glama.ai>",
-  "homepage": "https://glama.ai/mcp",
+  "author": "Mike T",
+  "homepage": "",
   "type": "module",
   "license": "MIT",
-  "description": "A boilerplate for FastMCP",
+  "description": "An MCP server allowing searching tokens in popular tokenlists.",
   "dependencies": {
     "fastmcp": "^3.14.4",
     "zod": "^3.24.4"
