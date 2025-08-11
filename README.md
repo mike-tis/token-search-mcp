@@ -1,5 +1,7 @@
 # FastMCP Boilerplate
 
+[![smithery badge](https://smithery.ai/badge/@mike-tis/fastmcp-boilerplate)](https://smithery.ai/server/@mike-tis/fastmcp-boilerplate)
+
 A boilerplate for [FastMCP](https://github.com/punkpeye/fastmcp).
 
 This boilerplate is a good starting point for building an MCP server. It includes a basic setup for testing, linting, formatting, and publishing to NPM.
@@ -17,6 +19,14 @@ npm run dev
 
 > [!NOTE]
 > If you are starting a new project, you may want to fork [fastmcp-boilerplate](https://github.com/punkpeye/fastmcp-boilerplate) and start from there.
+
+### Installing via Smithery
+
+To install fastmcp-boilerplate for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@mike-tis/fastmcp-boilerplate):
+
+```bash
+npx -y @smithery/cli install @mike-tis/fastmcp-boilerplate --client claude
+```
 
 ### Start the server
 
@@ -72,3 +82,4 @@ In order to use this workflow, you need to:
    1. [Create a new automation token](https://www.npmjs.com/settings/punkpeye/tokens/new)
    2. Add token as `NPM_TOKEN` environment secret (Settings → Secrets and Variables → Actions → "Manage environment secrets" → "release" → Add environment secret)
 1. Grant write access to the workflow (Settings → Actions → General → Workflow permissions → "Read and write permissions")
+
