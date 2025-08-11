@@ -1,7 +1,9 @@
 const TOKEN_LIST_ENDPOINTS = [
+  'http://defi.cmc.eth',
+  'http://erc20.cmc.eth',
+  'http://stablecoin.cmc.eth',
   'https://ipfs.io/ipns/tokens.uniswap.org',
-  'https://api.coinmarketcap.com/data-api/v3/uniswap/all.json',
-  'https://tokens.coingecko.com/uniswap/all.json',
+  'https://www.gemini.com/uniswap/manifest.json',
 ];
 
 export interface Token {

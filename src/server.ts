@@ -70,11 +70,21 @@ server.addTool({
     
     const limitedResults = matchedTokens.slice(0, limit);
     
+    const cleanedResults = limitedResults.map(token => ({
+      address: token.address,
+      chainId: token.chainId,
+      decimals: token.decimals,
+      logoURI: token.logoURI,
+      name: token.name,
+      symbol: token.symbol,
+      tokenLists: token.tokenLists
+    }));
+    
     return {
       content: [{
         text: JSON.stringify({
-          count: limitedResults.length,
-          tokens: limitedResults
+          count: cleanedResults.length,
+          tokens: cleanedResults
         }, null, 2),
         type: "text"
       }]
