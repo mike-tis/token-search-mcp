@@ -1,14 +1,14 @@
-const TOKEN_LIST_ENDPOINTS = [
-  'http://defi.cmc.eth',
-  'http://erc20.cmc.eth',
-  'http://stablecoin.cmc.eth',
-  'https://ipfs.io/ipns/tokens.uniswap.org',
-  'https://www.gemini.com/uniswap/manifest.json',
+export type ChainType = 'bnb' | 'solana' | 'ton';
+
+const TOKEN_LIST_CONFIG: Array<{ chain: ChainType; path: string; }> = [
+  { chain: 'bnb', path: 'src/bnb1000.csv' },
+  { chain: 'solana', path: 'src/solana1000.csv' },
+  { chain: 'ton', path: 'src/ton1000.csv' }
 ];
 
 export interface Token {
   address: string;
-  chainId: number;
+  chain: ChainType;
   decimals: number;
   logoURI?: string;
   name: string;
@@ -31,16 +31,15 @@ interface TokenListVersion {
   patch: number;
 }
 
-
 let mergedTokenList: Token[] = [];
 
 /**
- * Get a token by its address and chain ID
+ * Get a token by its address and chain
  */
-export function getTokenByAddress(address: string, chainId: number): Token | undefined {
+export function getTokenByAddress(address: string, chain: ChainType): Token | undefined {
   const normalizedAddress = address.toLowerCase();
   return mergedTokenList.find(
-    token => token.address.toLowerCase() === normalizedAddress && token.chainId === chainId
+    token => token.address.toLowerCase() === normalizedAddress && token.chain === chain
   );
 }
 
@@ -52,22 +51,29 @@ export function getTokenList(): Token[] {
 }
 
 /**
- * Initialize the token list by fetching and merging from all sources
+ * Get all tokens for a specific chain
+ */
+export function getTokensByChain(chain: ChainType): Token[] {
+  return mergedTokenList.filter(token => token.chain === chain);
+}
+
+/**
+ * Initialize the token list by loading and parsing from CSV files
  */
 export async function initializeTokenList(): Promise<void> {
   if (typeof process !== 'undefined' && process.stdout) {
     process.stdout.write('Initializing token list...\n');
   }
   mergedTokenList = [];
-  for (const endpoint of TOKEN_LIST_ENDPOINTS) {
+  for (const config of TOKEN_LIST_CONFIG) {
     if (typeof process !== 'undefined' && process.stdout) {
-      process.stdout.write(`Fetching token list from: ${endpoint}\n`);
+      process.stdout.write(`Loading token list from file: ${config.path} (chain: ${config.chain})\n`);
     }
-    const tokenList = await fetchTokenList(endpoint);
+    const tokenList = await loadTokenListFromCSV(config.path, config.chain);
     if (tokenList) {
       if (typeof process !== 'undefined' && process.stdout) {
-      process.stdout.write(`Merging token list: ${tokenList.name}\n`);
-    }
+        process.stdout.write(`Merging token list: ${tokenList.name}\n`);
+      }
       mergeTokenList(tokenList);
     }
   }
@@ -79,28 +85,36 @@ export async function initializeTokenList(): Promise<void> {
 /**
  * Search for tokens by symbol or name
  */
-export function searchTokens(query: string): Token[] {
+export function searchTokens(query: string, chain?: ChainType): Token[] {
   const normalizedQuery = query.toLowerCase();
+  let filteredTokens = mergedTokenList;
   
-  return mergedTokenList.filter(token => 
+  // If a chain is specified, filter by chain
+  if (chain) {
+    filteredTokens = filteredTokens.filter(token => token.chain === chain);
+  }
+  
+  return filteredTokens.filter(token => 
     token.symbol.toLowerCase().includes(normalizedQuery) ||
     token.name.toLowerCase().includes(normalizedQuery)
   );
 }
 
 /**
- * Fetch token list from a given URL
+ * Load token list from a CSV file
  */
-async function fetchTokenList(url: string): Promise<null | TokenList> {
+async function loadTokenListFromCSV(filepath: string, chain: ChainType): Promise<null | TokenList> {
   try {
-    const response = await fetch(url);
+    const response = await fetch(filepath.startsWith('http') ? filepath : `file://${filepath}`);
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`Error loading file! Status: ${response.status}`);
     }
-    return await response.json() as TokenList;
+    const csvContent = await response.text();
+    
+    return parseCSVToTokenList(csvContent, filepath, chain);
   } catch (error) {
     if (typeof process !== 'undefined' && process.stderr) {
-      process.stderr.write(`Error fetching token list from ${url}: ${error instanceof Error ? error.message : String(error)}\n`);
+      process.stderr.write(`Error loading token list from ${filepath}: ${error instanceof Error ? error.message : String(error)}\n`);
     }
     return null;
   }
@@ -115,7 +129,7 @@ function mergeTokenList(newList: TokenList): void {
   for (const token of newList.tokens) {
     const normalizedAddress = token.address.toLowerCase();
     const existingTokenIndex = mergedTokenList.findIndex(
-      t => t.address.toLowerCase() === normalizedAddress && t.chainId === token.chainId
+      t => t.address.toLowerCase() === normalizedAddress && t.chain === token.chain
     );
     
     if (existingTokenIndex === -1) {
@@ -136,4 +150,78 @@ function mergeTokenList(newList: TokenList): void {
       }
     }
   }
+}
+
+/**
+ * Parse CSV content to TokenList format
+ */
+function parseCSVToTokenList(csvContent: string, filename: string, chain: ChainType): TokenList {
+  // Parse CSV content into rows
+  const rows = csvContent.split('\n');
+  const headers = rows[0].split(',').map(header => header.replace(/"/g, '').trim());
+  
+  const tokens: Token[] = [];
+  
+  for (let i = 1; i < rows.length; i++) {
+    if (!rows[i].trim()) continue; // Skip empty rows
+    
+    // Handle CSV properly, including values with commas inside quotes
+    const values: string[] = [];
+    let currentValue = '';
+    let insideQuotes = false;
+    
+    for (const char of rows[i]) {
+      if (char === '"') {
+        insideQuotes = !insideQuotes;
+      } else if (char === ',' && !insideQuotes) {
+        values.push(currentValue);
+        currentValue = '';
+      } else {
+        currentValue += char;
+      }
+    }
+    values.push(currentValue); // Add the last value
+    
+    // Map CSV columns to token properties
+    const addressIndex = headers.indexOf('token_address');
+    const nameIndex = headers.indexOf('name');
+    const symbolIndex = headers.indexOf('symbol');
+    const decimalsIndex = headers.indexOf('decimals');
+    const logoUriIndex = headers.indexOf('logo_uri');
+    
+    if (addressIndex >= 0 && nameIndex >= 0 && symbolIndex >= 0 && decimalsIndex >= 0) {
+      const address = values[addressIndex].replace(/"/g, '');
+      const name = values[nameIndex].replace(/"/g, '');
+      const symbol = values[symbolIndex].replace(/"/g, '');
+      const decimalsStr = values[decimalsIndex].replace(/"/g, '');
+      const logoURI = logoUriIndex >= 0 ? values[logoUriIndex].replace(/"/g, '') : undefined;
+      
+      // Parse decimals to number and use fallback of 18 if invalid
+      const decimals = parseInt(decimalsStr, 10);
+      
+      // Add token to list with the specified chain
+      tokens.push({
+        address,
+        chain,
+        decimals: isNaN(decimals) ? 18 : decimals,
+        logoURI: logoURI === 'NULL' ? undefined : logoURI,
+        name,
+        symbol
+      });
+    }
+  }
+  
+  // Create a TokenList object
+  const tokenList: TokenList = {
+    name: filename,
+    timestamp: new Date().toISOString(),
+    tokens,
+    version: {
+      major: 1,
+      minor: 0,
+      patch: 0
+    }
+  };
+  
+  return tokenList;
 }

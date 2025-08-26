@@ -1,7 +1,7 @@
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 
-import { getTokenByAddress, initializeTokenList, searchTokens } from "./tokenList.js";
+import { ChainType, getTokenByAddress, getTokensByChain, initializeTokenList, searchTokens } from "./tokenList.js";
 
 const server = new FastMCP({
   instructions: "This server provides tools to search for tokens by name, symbol, or address, and to retrieve token details.",
@@ -14,19 +14,23 @@ initializeTokenList().catch((error: Error) => {
   console.error('Failed to initialize token list:', error);
   process.exit(1);
 });
+
 server.addTool({
-  description: "Get a token by its address and optional chain ID",
+  description: "Get a token by its address and blockchain",
   execute: async (args) => {
-    const token = getTokenByAddress(args.address, args.chainId || 1);
+    const chain = args.chain || 'ethereum';
+    const token = getTokenByAddress(args.address, chain as ChainType);
+    
     if (!token) {
       return {
         content: [{
-          text: `Token not found with address ${args.address} on chain ${args.chainId || 1}`,
+          text: `Token not found with address ${args.address} on chain ${chain}`,
           type: "text"
         }],
         isError: true
       };
     }
+    
     return {
       content: [{
         text: JSON.stringify(token, null, 2),
@@ -37,7 +41,7 @@ server.addTool({
   name: "get-token-by-address",
   parameters: z.object({
     address: z.string().describe("The token address"),
-    chainId: z.number().optional().describe("The chain ID (optional)")
+    chain: z.enum(['ethereum', 'bnb', 'ton']).optional().describe("The blockchain (ethereum, bnb, or ton)")
   })
 });
 
@@ -46,13 +50,9 @@ server.addTool({
   execute: async (args) => {
     const searchType = args.searchType || "full-match";
     const limit = args.limit || 100;
-    const chainId = args.chainId || 1;
+    const chain = args.chain as ChainType | undefined;
     
-    let matchedTokens = searchTokens(args.query);
-    
-    if (chainId) {
-      matchedTokens = matchedTokens.filter(token => token.chainId === chainId);
-    }
+    let matchedTokens = searchTokens(args.query, chain);
     
     if (searchType === "full-match") {
       const normalizedQuery = args.query.toLowerCase();
@@ -72,7 +72,7 @@ server.addTool({
     
     const cleanedResults = limitedResults.map(token => ({
       address: token.address,
-      chainId: token.chainId,
+      chain: token.chain,
       decimals: token.decimals,
       logoURI: token.logoURI,
       name: token.name,
@@ -92,10 +92,48 @@ server.addTool({
   },
   name: "search-tokens",
   parameters: z.object({
-    chainId: z.number().optional().describe("The chain ID to filter tokens by (optional)"),
+    chain: z.enum(['ethereum', 'bnb', 'ton']).optional().describe("The blockchain to filter tokens by (ethereum, bnb, or ton)"),
     limit: z.number().optional().describe("Maximum number of tokens to return"),
     query: z.string().describe("Search query for token name or symbol"),
     searchType: z.enum(["full-match", "partial-match"]).optional().describe("Type of match: full-match (exact) or partial-match (contains)")
+  })
+});
+
+// Add a new tool to get all tokens for a specific chain
+server.addTool({
+  description: "Get all tokens for a specific blockchain",
+  execute: async (args) => {
+    const chain = args.chain as ChainType;
+    const limit = args.limit || 100;
+    
+    const tokens = getTokensByChain(chain);
+    const limitedResults = tokens.slice(0, limit);
+    
+    const cleanedResults = limitedResults.map(token => ({
+      address: token.address,
+      chain: token.chain,
+      decimals: token.decimals,
+      logoURI: token.logoURI,
+      name: token.name,
+      symbol: token.symbol,
+      tokenLists: token.tokenLists
+    }));
+    
+    return {
+      content: [{
+        text: JSON.stringify({
+          chain: chain,
+          count: cleanedResults.length,
+          tokens: cleanedResults
+        }, null, 2),
+        type: "text"
+      }]
+    };
+  },
+  name: "get-tokens-by-chain",
+  parameters: z.object({
+    chain: z.enum(['ethereum', 'bnb', 'ton']).describe("The blockchain to get tokens for"),
+    limit: z.number().optional().describe("Maximum number of tokens to return")
   })
 });
 
