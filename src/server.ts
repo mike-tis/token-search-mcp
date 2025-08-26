@@ -18,7 +18,7 @@ initializeTokenList().catch((error: Error) => {
 server.addTool({
   description: "Get a token by its address and blockchain",
   execute: async (args) => {
-    const chain = args.chain || 'ethereum';
+    const chain = args.chain || 'solana';
     const token = getTokenByAddress(args.address, chain as ChainType);
     
     if (!token) {
@@ -41,7 +41,7 @@ server.addTool({
   name: "get-token-by-address",
   parameters: z.object({
     address: z.string().describe("The token address"),
-    chain: z.enum(['ethereum', 'bnb', 'ton']).optional().describe("The blockchain (ethereum, bnb, or ton)")
+    chain: z.enum(['solana', 'bnb', 'ton']).optional().describe("The blockchain (solana, bnb, or ton)")
   })
 });
 
@@ -49,7 +49,7 @@ server.addTool({
   description: "Search for tokens by name or symbol",
   execute: async (args) => {
     const searchType = args.searchType || "full-match";
-    const limit = args.limit || 100;
+    const limit = args.limit || 1000;
     const chain = args.chain as ChainType | undefined;
     
     let matchedTokens = searchTokens(args.query, chain);
@@ -92,7 +92,7 @@ server.addTool({
   },
   name: "search-tokens",
   parameters: z.object({
-    chain: z.enum(['ethereum', 'bnb', 'ton']).optional().describe("The blockchain to filter tokens by (ethereum, bnb, or ton)"),
+    chain: z.enum(['solana', 'bnb', 'ton']).optional().describe("The blockchain to filter tokens by (solana, bnb, or ton)"),
     limit: z.number().optional().describe("Maximum number of tokens to return"),
     query: z.string().describe("Search query for token name or symbol"),
     searchType: z.enum(["full-match", "partial-match"]).optional().describe("Type of match: full-match (exact) or partial-match (contains)")
@@ -104,7 +104,7 @@ server.addTool({
   description: "Get all tokens for a specific blockchain",
   execute: async (args) => {
     const chain = args.chain as ChainType;
-    const limit = args.limit || 100;
+    const limit = args.limit || 1000;
     
     const tokens = getTokensByChain(chain);
     const limitedResults = tokens.slice(0, limit);
@@ -132,7 +132,7 @@ server.addTool({
   },
   name: "get-tokens-by-chain",
   parameters: z.object({
-    chain: z.enum(['ethereum', 'bnb', 'ton']).describe("The blockchain to get tokens for"),
+    chain: z.enum(['solana', 'bnb', 'ton']).describe("The blockchain to get tokens for"),
     limit: z.number().optional().describe("Maximum number of tokens to return")
   })
 });

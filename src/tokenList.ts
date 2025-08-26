@@ -1,3 +1,6 @@
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+
 export type ChainType = 'bnb' | 'solana' | 'ton';
 
 const TOKEN_LIST_CONFIG: Array<{ chain: ChainType; path: string; }> = [
@@ -105,11 +108,18 @@ export function searchTokens(query: string, chain?: ChainType): Token[] {
  */
 async function loadTokenListFromCSV(filepath: string, chain: ChainType): Promise<null | TokenList> {
   try {
-    const response = await fetch(filepath.startsWith('http') ? filepath : `file://${filepath}`);
-    if (!response.ok) {
-      throw new Error(`Error loading file! Status: ${response.status}`);
+    let csvContent: string;
+  
+    try {
+      csvContent = await readFile(filepath, 'utf8');
+    } catch {
+      try {
+        const resolvedPath = join(process.cwd(), filepath);
+        csvContent = await readFile(resolvedPath, 'utf8');
+      } catch (innerError) {
+        throw new Error(`Failed to read file: ${filepath}. Error: ${innerError instanceof Error ? innerError.message : String(innerError)}`);
+      }
     }
-    const csvContent = await response.text();
     
     return parseCSVToTokenList(csvContent, filepath, chain);
   } catch (error) {
