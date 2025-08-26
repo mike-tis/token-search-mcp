@@ -1,15 +1,18 @@
 # Smithery Configuration File
 
-# Switching to container runtime since we had issues with the TypeScript runtime
+# Using container runtime for deployment
 runtime: "container"
 
 # Container runtime configuration
 startCommand:
   type: "http"
-  # Define configuration schema if your server needs specific configuration parameters
+  # Configuration schema for your MCP server - empty since no configuration is needed
   configSchema:
     type: "object"
     properties: {}
+  
+  # Empty example configuration since no parameters are required
+  exampleConfig: {}
 
 # Docker build configuration
 build:
