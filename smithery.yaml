@@ -1,0 +1,6 @@
+# Smithery Configuration File
+
+# Using TypeScript Runtime (recommended for TypeScript projects)
+runtime: "typescript"
+
+# No additional environment variables needed
