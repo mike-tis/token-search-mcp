@@ -1,6 +1,17 @@
 # Smithery Configuration File
 
-# Using TypeScript Runtime (recommended for TypeScript projects)
-runtime: "typescript"
+# Switching to container runtime since we had issues with the TypeScript runtime
+runtime: "container"
 
-# No additional environment variables needed
+# Container runtime configuration
+startCommand:
+  type: "http"
+  # Define configuration schema if your server needs specific configuration parameters
+  configSchema:
+    type: "object"
+    properties: {}
+
+# Docker build configuration
+build:
+  dockerfile: "Dockerfile"
+  dockerBuildPath: "."
