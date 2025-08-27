@@ -20,3 +20,12 @@ build:
 # Smithery deployment settings
 deployment:
   localOnly: false
+  
+# Metadata for Smithery registry
+name: "Token Search MCP Server"
+description: "An MCP server allowing searching tokens in popular tokenlists"
+tags: 
+  - "token"
+  - "search" 
+  - "erc20"
+  - "blockchain"
