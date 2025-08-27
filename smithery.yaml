@@ -1,28 +1,11 @@
-# Smithery Configuration File
-runtime: "node"
-entry: "dist/server.js"
+name: "Token Search MCP Server"
+description: "Search tokens in popular tokenlists"
 
-env:
-  NODE_ENV: "production"
-  PORT: "8080"
-  
+runtime: "node"
+
 startCommand:
-  type: "http" 
+  type: "http"
   port: 8080
-  
+
 build:
   dockerfile: "Dockerfile"
-  dockerBuildPath: "."
-
-# Metadata for Smithery registry  
-name: "Token Search MCP Server"
-description: "An MCP server allowing searching tokens in popular tokenlists"
-tags:
-  - "token"
-  - "search" 
-  - "erc20"
-  - "blockchain"
-
-# Deployment settings
-deployment:
-  localOnly: false
