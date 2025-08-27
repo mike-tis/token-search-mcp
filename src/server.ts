@@ -215,3 +215,6 @@ server.start({
   },
   transportType: "httpStream",
 });
+
+export { server };
+export default server;

@@ -2,18 +2,18 @@ FROM node:18-alpine as builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
+
+# Install ALL dependencies (including devDependencies for build)
+RUN npm ci
+
+# Copy TypeScript config and source
 COPY tsconfig.json ./
-
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy source code
 COPY src/ ./src/
 
-# Build TypeScript to JavaScript
-RUN npx tsc
+# Build TypeScript
+RUN npm run build
 
 # Production stage
 FROM node:18-alpine
@@ -26,21 +26,18 @@ COPY package*.json ./
 # Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy built application
+# Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S mcp -u 1001
+    adduser -S mcp -u 1001 && \
+    chown -R mcp:nodejs /app
 
 USER mcp
 
-# Expose port (use environment variable or default to 8080)
+# Expose port
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || '8080') + '/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
 # Start the server
 CMD ["node", "dist/server.js"]
