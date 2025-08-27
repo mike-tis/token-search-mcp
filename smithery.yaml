@@ -1,20 +1,16 @@
 # Smithery Configuration File
-
-# Using container runtime for deployment
 runtime: "container"
 
-# Container runtime configuration
 startCommand:
   type: "http"
-  # Configuration schema for your MCP server - empty since no configuration is needed
   configSchema:
     type: "object"
-    properties: {}
+    properties:
+      lunarCrushApiKey:
+        type: "string"
+        description: "Lunar Crush API key"
+    required: ["lunarCrushApiKey"]
   
-  # Empty example configuration since no parameters are required
-  exampleConfig: {}
-
-# Docker build configuration
 build:
   dockerfile: "Dockerfile"
   dockerBuildPath: "."
