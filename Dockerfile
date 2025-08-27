@@ -1,4 +1,5 @@
-FROM node:18-alpine
+# Multi-stage build для Smithery
+FROM node:18-alpine as builder
 
 WORKDIR /app
 
@@ -8,14 +9,23 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy application code
+# Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build with Smithery CLI
+RUN npx -y @smithery/cli build -o .smithery/index.cjs
 
-# Expose the port your application listens on (adjust if needed)
-EXPOSE 3000
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy only necessary files
+COPY --from=builder /app/.smithery/index.cjs ./index.cjs
+COPY --from=builder /app/package.json ./package.json
+
+# Expose port (Smithery обычно использует 8080)
+EXPOSE 8080
 
 # Start the server
-CMD ["node", "dist/index.js"]
+CMD ["node", "index.cjs"]

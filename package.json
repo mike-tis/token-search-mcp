@@ -2,6 +2,7 @@
   "name": "token-search-mcp",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "module": "./src/server.ts",
   "scripts": {
     "build": "tsc",
     "start": "tsx src/server.ts",
