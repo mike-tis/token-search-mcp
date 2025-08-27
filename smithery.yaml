@@ -1,15 +1,13 @@
 # Smithery Configuration File
-runtime: "container"
-
+runtime: "typescript"
+env:
+  NODE_ENV: "production"
+  
 startCommand:
   type: "http"
   configSchema:
     type: "object"
-    properties:
-      lunarCrushApiKey:
-        type: "string"
-        description: "Lunar Crush API key"
-    required: ["lunarCrushApiKey"]
+    properties: {}
   
 build:
   dockerfile: "Dockerfile"

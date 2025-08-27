@@ -211,10 +211,7 @@ server.addTool({
 
 server.start({
   httpStream: {
-    endpoint: "/mcp",
     port: 8080,
-    stateless: false, 
-  
   },
   transportType: "httpStream",
 });
